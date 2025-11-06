@@ -1,198 +1,398 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>BugMart — Fixed</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; margin: 24px; background:#f7f7f9; color:#222; }
-    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-    .cart { position:relative; cursor:pointer; }
-    .cart-badge { background:#e33; color:white; border-radius:999px; padding:2px 8px; font-size:12px; position:absolute; top:-8px; right:-8px; }
-    .products { display:flex; gap:16px; flex-wrap:wrap; }
-    .product { background:white; padding:12px; border-radius:6px; width:220px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-    .product h3 { margin:0 0 8px 0; font-size:16px; }
-    .price { font-weight:700; margin-bottom:8px; }
-    .onsale { color:#d33; font-weight:700; margin-left:8px; font-size:13px; }
-    button { background:#0366d6; color:white; border:none; padding:8px 10px; border-radius:4px; cursor:pointer; }
-    button:disabled { background:#9bb8e7; cursor:not-allowed; }
-    #log { margin-top:16px; font-family:monospace; background:#111; color:#bfb; padding:10px; border-radius:6px; max-height:160px; overflow:auto; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BugMart - (FIXED)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .page { display: none; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
 </head>
-<body>
-  <header>
-    <h1>BugMart — Fixed Build</h1>
-    <div class="cart" id="cartIcon" title="View cart" aria-label="Shopping cart">
-      🛒 <span id="cartCount" class="cart-badge">0</span>
-    </div>
-  </header>
+<body class="bg-gray-200">
 
-  <main>
-    <section>
-      <h2>Products</h2>
-      <div class="products" id="productList">
-        <!-- Products are rendered by JS -->
-      </div>
-    </section>
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto max-w-6xl p-4 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-indigo-700 cursor-pointer" data-page="products">BugMart</h1>
+            <div class="space-x-4">
+                <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="products">Products</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="cart">
+                    Cart (<span id="cart-count">0</span>)
+                </a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="profile">Profile</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600" id="login-logout-link" data-page="login">Login</a>
+            </div>
+        </div>
+    </nav>
 
-    <section>
-      <h2>Cart</h2>
-      <ul id="cartContents" aria-live="polite"></ul>
-    </section>
+    <main id="app-root" class="container mx-auto max-w-6xl p-4 md:p-8">
 
-    <section>
-      <h2>Developer Log (test helper)</h2>
-      <div id="log" aria-hidden="false"></div>
-    </section>
-  </main>
+        <section id="page-login" class="page bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto">
+            <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Hint: test">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Hint: pass">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700">
+                    Login
+                </button>
+                <p id="login-error" class="text-red-500 text-sm text-center hidden"></p>
+            </form>
+        </section>
 
-  <script>
-    // Sample application state. IDs intentionally match examples from the exercise.
-    const state = {
-      products: [
-        {
-          id: 1,
-          name: 'Flux Capacitor',
-          price: 999.99,
-          onSale: true,
-          salePrice: 499.99,
-          description: 'Makes time travel possible.'
-        },
-        {
-          id: 2,
-          name: 'Quantum Q-Tips',
-          price: 7.50,
-          onSale: false,
-          salePrice: null,
-          description: 'Clean quantum ears safely.'
-        },
-        {
-          id: 3,
-          name: 'Anti-Gravity Boots',
-          price: 149.99,
-          onSale: true,
-          salePrice: 119.99,
-          description: 'Walk on air (not responsible for floating).'
+        <section id="page-products" class="page">
+            <h2 class="text-2xl font-bold mb-6">Products</h2>
+            <div id="product-list" class="grid md:grid-cols-3 gap-6">
+                </div>
+        </section>
+
+        <section id="page-cart" class="page">
+            <h2 class="text-2xl font-bold mb-6">Your Cart</h2>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div id="cart-items" class="space-y-4">
+                    </div>
+                <hr class="my-6">
+                <div class="space-y-3">
+                    <div class="flex justify-between text-lg">
+                        <span>Subtotal:</span>
+                        <span id="cart-subtotal">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-lg">
+                        <span>Tax (10%):</span>
+                        <span id="cart-tax">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-lg">
+                        <span>Shipping:</span>
+                        <span id="cart-shipping">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-2xl font-bold mt-4 pt-4 border-t">
+                        <span>TOTAL:</span>
+                        <span id="cart-total">$0.00</span>
+                    </div>
+                </div>
+                <div class="mt-6 flex">
+                    <input type="text" id="discount-code" class="block w-full rounded-l-md border-gray-300 shadow-sm p-2 border" placeholder="Discount Code (e.g., SAVE10)">
+                    <button id="apply-discount-btn" class="bg-gray-700 text-white p-2 rounded-r-lg font-bold hover:bg-gray-800">Apply</button>
+                </div>
+                <p id="discount-message" class="text-sm mt-2"></p>
+                
+                <button id="clear-cart-btn" class="w-full bg-red-600 text-white p-2 rounded-lg mt-4 font-bold hover:bg-red-700">Clear Cart</button>
+            </div>
+        </section>
+
+        <section id="page-profile" class="page">
+            <h2 class="text-2xl font-bold mb-6">Your Profile</h2>
+            <div class="bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto space-y-4">
+                <div>
+                    <span class="font-semibold">Username:</span>
+                    <span id="profile-username"></span>
+                </div>
+                <div>
+                    <label for="shipping-tier" class="block text-sm font-medium text-gray-700">Shipping Tier</label>
+                    <select id="shipping-tier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <option value="standard">Standard ($15.00)</option>
+                        <option value="premium">Premium (Free Shipping)</option>
+                    </select>
+                </div>
+                <button id="update-profile-btn" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700">
+                    Update Profile
+                </button>
+                <p id="profile-message" class="text-green-600 text-sm text-center"></p>
+            </div>
+        </section>
+
+    </main>
+    
+    <script>
+        // --- APPLICATION STATE ---
+        const state = {
+            currentUser: null, 
+            products: [
+                { id: 1, name: 'Flux Capacitor', price: 100.00, onSale: false, salePrice: null, image: 'https://placehold.co/400x300/6366f1/white?text=Flux+Capacitor' },
+                { id: 2, name: 'Quantum Q-Tips', price: 10.00, onSale: true, salePrice: 5.00, image: 'https://placehold.co/400x300/10b981/white?text=Quantum+Q-Tips' },
+                { id: 3, name: 'Neural Net', price: 45.00, onSale: false, salePrice: null, image: 'https://placehold.co/400x300/f59e0b/white?text=Neural+Net' }
+            ],
+            cart: [], 
+        };
+
+        // --- GLOBAL ELEMENTS ---
+        const appRoot = document.getElementById('app-root');
+        const pages = document.querySelectorAll('.page');
+        const navLinks = document.querySelectorAll('nav [data-page]');
+        const cartCountEl = document.getElementById('cart-count');
+        const loginLogoutLink = document.getElementById('login-logout-link');
+
+        // --- NAVIGATION ---
+        
+        function navigateTo(pageId) {
+            pages.forEach(page => page.classList.remove('active'));
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            } else {
+                console.error(`Page not found: ${pageId}`);
+                document.getElementById('page-products').classList.add('active');
+            }
+            
+            if (pageId === 'products') renderProducts();
+            if (pageId === 'cart') renderCart();
+            if (pageId === 'profile') renderProfile();
+            
+            if (pageId === 'cart' || pageId === 'profile') {
+                if (!state.currentUser) {
+                    navigateTo('login');
+                    document.getElementById('login-error').textContent = 'You must be logged in to view this page.';
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+            }
         }
-      ],
-      cart: []
-    };
 
-    // Utility: simple logger to on-page log for testing / debugging
-    function devLog(...args) {
-      const el = document.getElementById('log');
-      const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
-      const line = document.createElement('div');
-      line.textContent = `[${new Date().toISOString()}] ${msg}`;
-      el.prepend(line);
-      console.debug(...args);
-    }
-
-    // Render products to the page with IDs and attributes friendly for Selenium IDE tests.
-    function renderProducts() {
-      const list = document.getElementById('productList');
-      list.innerHTML = '';
-      state.products.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'product';
-        card.innerHTML = `
-          <h3 id="product-name-${p.id}">${p.name}</h3>
-          <div class="price" id="product-price-${p.id}">
-            $${(p.onSale && p.salePrice ? p.salePrice : p.price).toFixed(2)}
-            ${p.onSale ? '<span class="onsale">ON SALE</span>' : ''}
-          </div>
-          <p id="product-desc-${p.id}">${p.description}</p>
-          <button id="add-btn-${p.id}" data-product-id="${p.id}" aria-label="Add ${p.name} to cart">Add to cart</button>
-        `;
-        list.appendChild(card);
-      });
-    }
-
-    // Update cart icon and contents immediately when items are added/removed.
-    function updateCartIcon() {
-      const countEl = document.getElementById('cartCount');
-      countEl.textContent = state.cart.length;
-      devLog('Cart updated. Count=', state.cart.length);
-      renderCartContents();
-    }
-
-    // Render cart detailed contents (for human verification)
-    function renderCartContents() {
-      const ul = document.getElementById('cartContents');
-      ul.innerHTML = '';
-      state.cart.forEach((item, idx) => {
-        const li = document.createElement('li');
-        li.id = `cart-item-${idx}`;
-        li.textContent = `${item.name} — $${(item.price).toFixed(2)}`;
-        ul.appendChild(li);
-      });
-    }
-
-    // --- BUG FIX: handleAddToCart should correctly add ANY product, prefer salePrice if onSale ---
-    function handleAddToCart(productId) {
-      devLog('handleAddToCart called for productId=', productId);
-
-      // --- START OF FIX ---
-      const product = state.products.find(p => p.id === productId);
-      if (!product) {
-        devLog('Product not found:', productId);
-        return; // Product not found
-      }
-
-      // Create a copy to add to the cart
-      const itemToAdd = { ...product };
-
-      // BUG 8 FIX: Check if it's on sale and use the sale price
-      if (itemToAdd.onSale && itemToAdd.salePrice) {
-        itemToAdd.price = itemToAdd.salePrice;
-      }
-
-      state.cart.push(itemToAdd);
-
-      // BUG 3 FIX: Update the cart icon immediately!
-      updateCartIcon();
-      devLog('Added to cart:', itemToAdd);
-      // --- END OF FIX ---
-    }
-
-    // Attach listeners to product add buttons (delegated attachment for dynamic content)
-    function hookAddButtons() {
-      document.getElementById('productList').addEventListener('click', (ev) => {
-        const btn = ev.target.closest('button[data-product-id]');
-        if (!btn) return;
-        const id = Number(btn.getAttribute('data-product-id'));
-        handleAddToCart(id);
-      });
-    }
-
-    // For convenience: expose a test helper on window so Selenium IDE or console tests can use it
-    window.testHelpers = {
-      addProductByName: (name) => {
-        const p = state.products.find(x => x.name === name);
-        if (!p) throw new Error('Product not found: ' + name);
-        handleAddToCart(p.id);
-      },
-      getCart: () => state.cart.slice(),
-      resetCart: () => { state.cart = []; updateCartIcon(); }
-    };
-
-    // Initial render
-    renderProducts();
-    hookAddButtons();
-    updateCartIcon();
-
-    // Accessibility / keyboard support: allow Enter/Space to activate add to cart
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        const active = document.activeElement;
-        if (active && active.matches('button[data-product-id]')) {
-          active.click();
+        function setupNavigation() {
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = e.currentTarget.getAttribute('data-page');
+                    if (pageId === 'login' && state.currentUser) {
+                        state.currentUser = null;
+                        state.cart = []; 
+                        updateCartIcon();
+                        loginLogoutLink.textContent = 'Login';
+                        navigateTo('login');
+                    } else {
+                        navigateTo(pageId);
+                    }
+                });
+            });
         }
-      }
-    });
+        
+        // --- PAGE RENDERING FUNCTIONS ---
+        
+        function renderProducts() {
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = ''; 
+            
+            state.products.forEach(product => {
+                const priceHtml = product.onSale
+                    ? `<span class="text-lg font-bold text-red-600">$${product.salePrice.toFixed(2)}</span>
+                       <span class="text-sm text-gray-500 line-through ml-2">$${product.price.toFixed(2)}</span>`
+                    : `<span class="text-lg font-bold text-gray-800">$${product.price.toFixed(2)}</span>`;
+                
+                productList.innerHTML += `
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <h3 class="text-xl font-bold">${product.name}</h3>
+                            <div class="my-2">${priceHtml}</div>
+                            <button class="add-to-cart-btn w-full bg-indigo-600 text-white p-2 rounded-lg font-bold hover:bg-indigo-700" data-product-id="${product.id}">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', handleAddToCart);
+            });
+        }
 
-    // If you want to quickly test via console:
-    // window.testHelpers.addProductByName('Quantum Q-Tips');
-  </script>
+        function renderCart() {
+            // This function is now called by `handleAddToCart` AND `MapsTo('cart')`.
+            // Calling it here ensures the cart page is correct if you navigate manually.
+            updateCartIcon();
+            
+            const cartItemsEl = document.getElementById('cart-items');
+            cartItemsEl.innerHTML = '';
+            
+            if (state.cart.length === 0) {
+                cartItemsEl.innerHTML = '<p class="text-gray-500 text-center">Your cart is empty.</p>';
+                calculateTotals(0); 
+                return;
+            }
+
+            state.cart.forEach(item => {
+                cartItemsEl.innerHTML += `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold">${item.name}</h4>
+                            <p class="text-sm text-gray-600">$${item.price.toFixed(2)}</p>
+                        </div>
+                        <span class="font-bold">$${item.price.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            
+            calculateTotals(0); 
+        }
+        
+        function renderProfile() {
+            if (!state.currentUser) return; 
+            
+            // --- FIX 1 ---
+            // Was: document.getElementById('profile-username').textContent = '';
+            document.getElementById('profile-username').textContent = state.currentUser.username; 
+            
+            document.getElementById('shipping-tier').value = state.currentUser.shippingTier;
+        }
+
+        // --- LOGIC & EVENT HANDLERS ---
+        
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('login-error');
+
+            // --- FIX 7 ---
+            // Add validation for empty fields
+            if (username.trim() === '' || password.trim() === '') {
+                errorEl.textContent = 'Username and password cannot be empty.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (username === 'test' && password === 'pass') {
+                state.currentUser = {
+                    username: username,
+                    shippingTier: 'standard' 
+                };
+                loginLogoutLink.textContent = 'Logout';
+                errorEl.classList.add('hidden');
+                navigateTo('products');
+            } else {
+                errorEl.textContent = 'Invalid username or password.';
+                errorEl.classList.remove('hidden');
+            }
+        }
+        
+        function handleAddToCart(e) {
+            if (!state.currentUser) {
+                navigateTo('login');
+                document.getElementById('login-error').textContent = 'You must be logged in to add items.';
+                document.getElementById('login-error').classList.remove('hidden');
+                return;
+            }
+            
+            const productId = parseInt(e.currentTarget.getAttribute('data-product-id'));
+            
+            // --- FIX 3, 4, & 8 ---
+            // This single block replaces the buggy if/else block.
+            
+            const product = state.products.find(p => p.id === productId);
+            if (!product) return; // Product not found
+
+            // Create a copy to add to the cart
+            const itemToAdd = { ...product };
+
+            // FIX 8: Check if it's on sale and use the sale price
+            if (itemToAdd.onSale && itemToAdd.salePrice) {
+                itemToAdd.price = itemToAdd.salePrice;
+            }
+
+            state.cart.push(itemToAdd);
+
+            // FIX 3: Update the cart icon immediately!
+            updateCartIcon();
+            
+            // --- END OF FIXES 3, 4, 8 ---
+        }
+
+        function calculateTotals(discountPercentage) {
+            let subtotal = 0;
+            state.cart.forEach(item => {
+                // FIX 8 (Upstream): item.price is now correctly $5.00 for Q-Tips
+                subtotal += item.price;
+            });
+            
+            const tax = subtotal * 0.10;
+            
+            // --- FIX 2 ---
+            // Was a buggy if-block. Now correctly reads state.
+            let shippingCost = (state.currentUser.shippingTier === 'premium') ? 0.00 : 15.00;
+            
+            // --- FIX 5 ---
+            // Discount is now calculated from subtotal, not total.
+            let discountAmount = subtotal * discountPercentage;
+            let total = (subtotal + tax + shippingCost) - discountAmount;
+            
+            document.getElementById('cart-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('cart-tax').textContent = `$${tax.toFixed(2)}`;
+            document.getElementById('cart-shipping').textContent = `$${shippingCost.toFixed(2)}`;
+            document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+        }
+
+        function handleApplyDiscount() {
+            const code = document.getElementById('discount-code').value;
+            const messageEl = document.getElementById('discount-message');
+            
+            let subtotal = 0;
+            state.cart.forEach(item => { subtotal += item.price; });
+            
+            // --- FIX 6 ---
+            // Removed the `&& subtotal > 50` requirement
+            if (code === 'SAVE10') {
+                messageEl.textContent = '10% discount applied!';
+                messageEl.className = 'text-green-600 text-sm mt-2';
+                calculateTotals(0.10); // Apply 10% discount
+            } else {
+                messageEl.textContent = 'Discount code not valid for this order.';
+                messageEl.className = 'text-red-500 text-sm mt-2';
+                calculateTotals(0); // Apply 0% discount
+            }
+        }
+        
+        function handleUpdateProfile() {
+            const tier = document.getElementById('shipping-tier').value;
+            state.currentUser.shippingTier = tier;
+            
+            // This now works because renderProfile() (FIX 1)
+            // and calculateTotals() (FIX 2) read from the state.
+            
+            document.getElementById('profile-username').textContent = state.currentUser.username;
+            
+            const messageEl = document.getElementById('profile-message');
+            messageEl.textContent = 'Profile updated successfully!';
+            setTimeout(() => messageEl.textContent = '', 2000);
+        }
+
+        /**
+         * Updates the cart count in the header.
+         */
+        function updateCartIcon() {
+            cartCountEl.textContent = state.cart.length;
+        }
+
+        // --- PHASE 4 FEATURE ---
+        function handleClearCart() {
+            state.cart = []; // Empty the cart
+            renderCart(); // Re-draw the cart page (which calls updateCartIcon)
+        }
+
+        // --- APP INITIALIZATION ---
+        function init() {
+            setupNavigation();
+            
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('update-profile-btn').addEventListener('click', handleUpdateProfile);
+            document.getElementById('apply-discount-btn').addEventListener('click', handleApplyDiscount);
+            
+            // PHASE 4 FEATURE
+            document.getElementById('clear-cart-btn').addEventListener('click', handleClearCart);
+            
+            navigateTo('login');
+        }
+
+        // Run the app
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
 </body>
 </html>
