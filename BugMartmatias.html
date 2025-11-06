@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BugMart - A QA Playground</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Simple "page" transition */
+        .page { display: none; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-200">
+
+    <!-- Header & Navigation -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto max-w-6xl p-4 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-indigo-700 cursor-pointer" data-page="products">BugMart</h1>
+            <div class="space-x-4">
+                <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="products">Products</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="cart">
+                    Cart (<span id="cart-count">0</span>)
+                </a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="profile">Profile</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600" id="login-logout-link" data-page="login">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="app-root" class="container mx-auto max-w-6xl p-4 md:p-8">
+
+        <!-- Login Page -->
+        <section id="page-login" class="page bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto">
+            <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Hint: test">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Hint: pass">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700">
+                    Login
+                </button>
+                <p id="login-error" class="text-red-500 text-sm text-center hidden"></p>
+            </form>
+        </section>
+
+        <!-- Product Page -->
+        <section id="page-products" class="page">
+            <h2 class="text-2xl font-bold mb-6">Products</h2>
+            <div id="product-list" class="grid md:grid-cols-3 gap-6">
+                <!-- Products will be injected here by JS -->
+            </div>
+        </section>
+
+        <!-- Cart Page -->
+        <section id="page-cart" class="page">
+            <h2 class="text-2xl font-bold mb-6">Your Cart</h2>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div id="cart-items" class="space-y-4">
+                    <!-- Cart items will be injected here by JS -->
+                </div>
+                <hr class="my-6">
+                <!-- Totals -->
+                <div class="space-y-3">
+                    <div class="flex justify-between text-lg">
+                        <span>Subtotal:</span>
+                        <span id="cart-subtotal">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-lg">
+                        <span>Tax (10%):</span>
+                        <span id="cart-tax">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-lg">
+                        <span>Shipping:</span>
+                        <span id="cart-shipping">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-2xl font-bold mt-4 pt-4 border-t">
+                        <span>TOTAL:</span>
+                        <span id="cart-total">$0.00</span>
+                    </div>
+                </div>
+                <!-- Discount Code -->
+                <div class="mt-6 flex">
+                    <input type="text" id="discount-code" class="block w-full rounded-l-md border-gray-300 shadow-sm p-2 border" placeholder="Discount Code (e.g., SAVE10)">
+                    <button id="apply-discount-btn" class="bg-gray-700 text-white p-2 rounded-r-lg font-bold hover:bg-gray-800">Apply</button>
+                </div>
+                <p id="discount-message" class="text-sm mt-2"></p>
+            </div>
+        </section>
+
+        <!-- Profile Page -->
+        <section id="page-profile" class="page">
+            <h2 class="text-2xl font-bold mb-6">Your Profile</h2>
+            <div class="bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto space-y-4">
+                <div>
+                    <span class="font-semibold">Username:</span>
+                    <span id="profile-username"></span>
+                </div>
+                <div>
+                    <label for="shipping-tier" class="block text-sm font-medium text-gray-700">Shipping Tier</label>
+                    <select id="shipping-tier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <option value="standard">Standard ($15.00)</option>
+                        <option value="premium">Premium (Free Shipping)</option>
+                    </select>
+                </div>
+                <button id="update-profile-btn" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700">
+                    Update Profile
+                </button>
+                <p id="profile-message" class="text-green-600 text-sm text-center"></p>
+            </div>
+        </section>
+
+    </main>
+    
+    <!-- 
+    ==================================================
+    == TEACHER'S GUIDE - LIST OF BUGS ==
+    ==================================================
+    
+    This app is designed to be tested with an automation tool like Selenium.
+    The bugs are specifically focused on integration points and complex logic
+    that would be tedious to re-test manually.
+    
+    1.  INTEGRATION BUG (Login/Profile):
+        - **Bug:** Logging in doesn't update the Profile page.
+        - **Test Case:** 1. Go to Login page, login as "test"/"pass".
+            2. Navigate to the Profile page.
+        - **Result:** The "Username" field is blank. The app *only* sets the username when the "Update Profile" button is clicked, not on login.
+        
+    2.  INTEGRATION BUG (Profile/Cart):
+        - **Bug:** Updating the "Shipping Tier" on the Profile page to "Premium (Free Shipping)" does *not* update the shipping cost in the Cart.
+        - **Test Case (requires automation):**
+            1. Login.
+            2. Add an item to the cart.
+            3. Go to Cart, observe Shipping is "$15.00".
+            4. Go to Profile, select "Premium (Free Shipping)", click "Update Profile".
+            5. Go back to Cart.
+        - **Result:** Shipping is *still* "$15.00". The Cart module never checks the user's profile status.
+        
+    3.  INTEGRATION BUG (Product/Cart Icon):
+        - **Bug:** The "Cart (0)" count in the header navigation does *not* update immediately when an item is added.
+        - **Test Case:**
+            1. Login.
+            2. On the Products page, click "Add to Cart" on any item.
+        - **Result:** The header still says "Cart (0)". It only updates when you manually navigate to the Cart page itself.
+        
+    4.  REGRESSION BUG (Product/Cart):
+        - **Bug:** A "developer fix" for the "Flux Capacitor" add-to-cart button broke all other add-to-cart buttons.
+        - **Test Case:**
+            1. Login.
+            2. Add "Flux Capacitor" to cart. (This works).
+            3. Try to add "Quantum Q-Tips" or "Neural Net" to the cart.
+        - **Result:** The buttons do nothing. This forces students to write a test that checks *all* product buttons, not just one. (See `handleAddToCart` function).
+    
+    5.  LOGIC BUG (Automation Candidate - Edge Cases):
+        - **Bug:** The discount code "SAVE10" is supposed to give 10% off the *subtotal*. Instead, it gives 10% off the *total* (after tax & shipping).
+        - **Test Case (requires automation):**
+            1. Login. Add "Flux Capacitor" ($100).
+            2. Go to Cart. Subtotal = $100. Tax = $10. Shipping = $15. Total = $125.
+            3. Apply code "SAVE10".
+        - **Result:** A discount of $12.50 (10% of Total) is applied, not $10.00 (10% of Subtotal).
+    
+    6.  LOGIC BUG (Automation Candidate - Data-Driven):
+        - **Bug:** The "SAVE10" discount code *only* works if the subtotal is over $50. This requirement is not stated anywhere.
+        - **Test Case (requires automation):**
+            1. Login. Add "Neural Net" ($45).
+            2. Go to Cart.
+            3. Apply code "SAVE10".
+        - **Result:** An error message "Discount code not valid for this order" appears.
+        
+    7.  VALIDATION BUG (Automation Candidate - Repetitive):
+        - **Bug:** The Login form has no client-side validation.
+        - **Test Case:** Click "Login" with empty username/password fields.
+        - **Result:** The page does nothing (no error message, no login). A good test suite would check for empty fields, short passwords, invalid emails, etc., which is tedious to do manually.
+    
+    8.  INTEGRATION BUG (Product/Cart Price):
+        - **Bug:** The "Quantum Q-Tips" are "On Sale!" on the product page, but are added to the cart at their *full price*.
+        - **Test Case:**
+            1. Login.
+            2. Note "Quantum Q-Tips" price is $5.00 (was $10.00).
+            3. Add item to cart.
+            4. Go to Cart page.
+        - **Result:** The item is listed in the cart for $10.00, not the $5.00 sale price.
+        
+    ==================================================
+    -->
+
+    <script>
+        // --- APPLICATION STATE ---
+        // This is the "single source of truth".
+        // Bugs happen when modules don't read/write to this correctly.
+        const state = {
+            currentUser: null, // Holds the logged-in user object
+            products: [
+                { id: 1, name: 'Flux Capacitor', price: 100.00, onSale: false, salePrice: null, image: 'https://placehold.co/400x300/6366f1/white?text=Flux+Capacitor' },
+                { id: 2, name: 'Quantum Q-Tips', price: 10.00, onSale: true, salePrice: 5.00, image: 'https://placehold.co/400x300/10b981/white?text=Quantum+Q-Tips' },
+                { id: 3, name: 'Neural Net', price: 45.00, onSale: false, salePrice: null, image: 'https://placehold.co/400x300/f59e0b/white?text=Neural+Net' }
+            ],
+            cart: [], // Array of product objects
+        };
+
+        // --- GLOBAL ELEMENTS ---
+        const appRoot = document.getElementById('app-root');
+        const pages = document.querySelectorAll('.page');
+        const navLinks = document.querySelectorAll('nav [data-page]');
+        const cartCountEl = document.getElementById('cart-count');
+        const loginLogoutLink = document.getElementById('login-logout-link');
+
+        // --- NAVIGATION ---
+        
+        /**
+         * Simple SPA router. Hides all pages, shows the one requested.
+         */
+        function navigateTo(pageId) {
+            // Hide all pages
+            pages.forEach(page => page.classList.remove('active'));
+            // Show the requested page
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            } else {
+                console.error(`Page not found: ${pageId}`);
+                document.getElementById('page-products').classList.add('active');
+            }
+            
+            // Re-render content for dynamic pages
+            if (pageId === 'products') renderProducts();
+            if (pageId === 'cart') renderCart();
+            if (pageId === 'profile') renderProfile();
+            
+            // Handle auth-wall
+            if (pageId === 'cart' || pageId === 'profile') {
+                if (!state.currentUser) {
+                    navigateTo('login');
+                    document.getElementById('login-error').textContent = 'You must be logged in to view this page.';
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+            }
+        }
+
+        /**
+         * Attaches click handlers to all nav links.
+         */
+        function setupNavigation() {
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = e.currentTarget.getAttribute('data-page');
+                    if (pageId === 'login' && state.currentUser) {
+                        // Handle logout
+                        state.currentUser = null;
+                        state.cart = []; // Clear cart on logout
+                        updateCartIcon();
+                        loginLogoutLink.textContent = 'Login';
+                        navigateTo('login');
+                    } else {
+                        navigateTo(pageId);
+                    }
+                });
+            });
+        }
+        
+        // --- PAGE RENDERING FUNCTIONS ---
+        
+        /**
+         * Renders the product list on the Products page.
+         */
+        function renderProducts() {
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = ''; // Clear list
+            
+            state.products.forEach(product => {
+                const priceHtml = product.onSale
+                    ? `<span class="text-lg font-bold text-red-600">$${product.salePrice.toFixed(2)}</span>
+                       <span class="text-sm text-gray-500 line-through ml-2">$${product.price.toFixed(2)}</span>`
+                    : `<span class="text-lg font-bold text-gray-800">$${product.price.toFixed(2)}</span>`;
+                
+                productList.innerHTML += `
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <h3 class="text-xl font-bold">${product.name}</h3>
+                            <div class="my-2">${priceHtml}</div>
+                            <button class="add-to-cart-btn w-full bg-indigo-600 text-white p-2 rounded-lg font-bold hover:bg-indigo-700" data-product-id="${product.id}">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Add event listeners to new buttons
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', handleAddToCart);
+            });
+        }
+
+        /**
+         * Renders the cart contents and calculates totals.
+         */
+        function renderCart() {
+            // BUG 3: Cart icon update is here, which is too late.
+            // It should be called in `handleAddToCart`.
+            updateCartIcon();
+            
+            const cartItemsEl = document.getElementById('cart-items');
+            cartItemsEl.innerHTML = '';
+            
+            if (state.cart.length === 0) {
+                cartItemsEl.innerHTML = '<p class="text-gray-500 text-center">Your cart is empty.</p>';
+                calculateTotals(0); // Pass 0 for discount
+                return;
+            }
+
+            state.cart.forEach(item => {
+                cartItemsEl.innerHTML += `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold">${item.name}</h4>
+                            <p class="text-sm text-gray-600">$${item.price.toFixed(2)}</p>
+                        </div>
+                        <span class="font-bold">$${item.price.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            
+            calculateTotals(0); // Pass 0 for discount initially
+        }
+        
+        /**
+         * Renders the profile page.
+         */
+        function renderProfile() {
+            if (!state.currentUser) return; // Should be caught by router, but good practice
+            
+            // BUG 1: Does not read from state.currentUser.username
+            document.getElementById('profile-username').textContent = ''; 
+            
+            // This is how it *should* be:
+            // document.getElementById('profile-username').textContent = state.currentUser.username;
+            
+            document.getElementById('shipping-tier').value = state.currentUser.shippingTier;
+        }
+
+        // --- LOGIC & EVENT HANDLERS ---
+        
+        /**
+         * Handles the login form submission.
+         */
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('login-error');
+
+            // BUG 7: No validation for empty/invalid fields.
+            
+            if (username === 'test' && password === 'pass') {
+                state.currentUser = {
+                    username: username,
+                    shippingTier: 'standard' // Default shipping
+                };
+                loginLogoutLink.textContent = 'Logout';
+                errorEl.classList.add('hidden');
+                navigateTo('products');
+            } else {
+                errorEl.textContent = 'Invalid username or password.';
+                errorEl.classList.remove('hidden');
+            }
+        }
+        
+        /**
+         * Handles adding an item to the cart.
+         */
+        function handleAddToCart(e) {
+            if (!state.currentUser) {
+                navigateTo('login');
+                document.getElementById('login-error').textContent = 'You must be logged in to add items.';
+                document.getElementById('login-error').classList.remove('hidden');
+                return;
+            }
+            
+            const productId = parseInt(e.currentTarget.getAttribute('data-product-id'));
+            
+            // BUG 4 (REGRESSION): A "fix" for product 1 broke all others.
+            // --- START OF FIX ---
+
+            const product = state.products.find(p => p.id === productId);
+            if (!product) return; // Product not found
+
+                // Create a copy to add to the cart
+            const itemToAdd = { ...product };
+
+                // BUG 8 FIX: Check if it's on sale and use the sale price
+            if (itemToAdd.onSale && itemToAdd.salePrice) {
+                    itemToAdd.price = itemToAdd.salePrice;
+            }
+
+            state.cart.push(itemToAdd);
+
+                // BUG 3 FIX: Update the cart icon immediately!
+            updateCartIcon();
+
+                // --- END OF FIX ---
+
+            // BUG 3 (Missing Call): The `updateCartIcon()` function is not called here.
+        }
+
+        /**
+         * Calculates all totals in the cart.
+         */
+        function calculateTotals(discountPercentage) {
+            let subtotal = 0;
+            state.cart.forEach(item => {
+                // BUG 8 (Continued): Reads item.price, which was added at full price.
+                subtotal += item.price;
+            });
+            
+            const tax = subtotal * 0.10;
+            
+            // BUG 2: Shipping is hard-coded, doesn't check state.currentUser.shippingTier
+            const shipping = (state.currentUser.shippingTier === 'premium') ? 0.00 : 15.00;
+            // The logic above is *correct*, but the state it reads from is never updated by the Profile page.
+            // Oh, wait, no. The bug is that the *state* is updated, but this function
+            // reads from the *hard-coded* default. Let's simulate that.
+            
+            let shippingCost = 15.00;
+            // This is how it *should* be:
+            // let shippingCost = (state.currentUser.shippingTier === 'premium') ? 0.00 : 15.00;
+            
+            // BUG 2 (Actual):
+            // The code *ignores* the user state.
+            if (state.currentUser.shippingTier === 'standard') {
+                shippingCost = 15.00;
+            }
+            // The dev forgot to add: else if (state.currentUser.shippingTier === 'premium') { shippingCost = 0.00; }
+            
+            
+            let total = subtotal + tax + shippingCost;
+            
+            // BUG 5: Discount is applied to *total*, not *subtotal*.
+            let discountAmount = total * discountPercentage;
+            total -= discountAmount;
+            
+            document.getElementById('cart-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('cart-tax').textContent = `$${tax.toFixed(2)}`;
+            document.getElementById('cart-shipping').textContent = `$${shippingCost.toFixed(2)}`;
+            document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+        }
+
+        /**
+         * Handles the "Apply Discount" button.
+         */
+        function handleApplyDiscount() {
+            const code = document.getElementById('discount-code').value;
+            const messageEl = document.getElementById('discount-message');
+            
+            // BUG 6: Code only works if subtotal is > $50.
+            let subtotal = 0;
+            state.cart.forEach(item => { subtotal += item.price; });
+            
+            if (code === 'SAVE10' && subtotal > 50) {
+                messageEl.textContent = '10% discount applied!';
+                messageEl.className = 'text-green-600 text-sm mt-2';
+                calculateTotals(0.10); // Apply 10% discount
+            } else {
+                messageEl.textContent = 'Discount code not valid for this order.';
+                messageEl.className = 'text-red-500 text-sm mt-2';
+                calculateTotals(0); // Apply 0% discount
+            }
+        }
+        
+        /**
+         * Handles the "Update Profile" button.
+         */
+        function handleUpdateProfile() {
+            const tier = document.getElementById('shipping-tier').value;
+            state.currentUser.shippingTier = tier;
+            
+            // This *correctly* updates the state...
+            // ...but the Cart's `calculateTotals` function doesn't read it. (BUG 2)
+            
+            // This *correctly* updates the username...
+            // ...but it's the *only* place it gets set. (BUG 1)
+            document.getElementById('profile-username').textContent = state.currentUser.username;
+            
+            const messageEl = document.getElementById('profile-message');
+            messageEl.textContent = 'Profile updated successfully!';
+            setTimeout(() => messageEl.textContent = '', 2000);
+        }
+
+        /**
+         * Updates the cart count in the header.
+         */
+        function updateCartIcon() {
+            cartCountEl.textContent = state.cart.length;
+        }
+
+
+        // --- APP INITIALIZATION ---
+        function init() {
+            setupNavigation();
+            // Add listeners for forms/buttons that are always visible
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('update-profile-btn').addEventListener('click', handleUpdateProfile);
+            document.getElementById('apply-discount-btn').addEventListener('click', handleApplyDiscount);
+            
+            // Start on the login page
+            navigateTo('login');
+        }
+
+        // Run the app
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
