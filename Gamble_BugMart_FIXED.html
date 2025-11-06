@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>BugMart — Fixed</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 24px; background:#f7f7f9; color:#222; }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .cart { position:relative; cursor:pointer; }
+    .cart-badge { background:#e33; color:white; border-radius:999px; padding:2px 8px; font-size:12px; position:absolute; top:-8px; right:-8px; }
+    .products { display:flex; gap:16px; flex-wrap:wrap; }
+    .product { background:white; padding:12px; border-radius:6px; width:220px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+    .product h3 { margin:0 0 8px 0; font-size:16px; }
+    .price { font-weight:700; margin-bottom:8px; }
+    .onsale { color:#d33; font-weight:700; margin-left:8px; font-size:13px; }
+    button { background:#0366d6; color:white; border:none; padding:8px 10px; border-radius:4px; cursor:pointer; }
+    button:disabled { background:#9bb8e7; cursor:not-allowed; }
+    #log { margin-top:16px; font-family:monospace; background:#111; color:#bfb; padding:10px; border-radius:6px; max-height:160px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BugMart — Fixed Build</h1>
+    <div class="cart" id="cartIcon" title="View cart" aria-label="Shopping cart">
+      🛒 <span id="cartCount" class="cart-badge">0</span>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Products</h2>
+      <div class="products" id="productList">
+        <!-- Products are rendered by JS -->
+      </div>
+    </section>
+
+    <section>
+      <h2>Cart</h2>
+      <ul id="cartContents" aria-live="polite"></ul>
+    </section>
+
+    <section>
+      <h2>Developer Log (test helper)</h2>
+      <div id="log" aria-hidden="false"></div>
+    </section>
+  </main>
+
+  <script>
+    // Sample application state. IDs intentionally match examples from the exercise.
+    const state = {
+      products: [
+        {
+          id: 1,
+          name: 'Flux Capacitor',
+          price: 999.99,
+          onSale: true,
+          salePrice: 499.99,
+          description: 'Makes time travel possible.'
+        },
+        {
+          id: 2,
+          name: 'Quantum Q-Tips',
+          price: 7.50,
+          onSale: false,
+          salePrice: null,
+          description: 'Clean quantum ears safely.'
+        },
+        {
+          id: 3,
+          name: 'Anti-Gravity Boots',
+          price: 149.99,
+          onSale: true,
+          salePrice: 119.99,
+          description: 'Walk on air (not responsible for floating).'
+        }
+      ],
+      cart: []
+    };
+
+    // Utility: simple logger to on-page log for testing / debugging
+    function devLog(...args) {
+      const el = document.getElementById('log');
+      const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+      const line = document.createElement('div');
+      line.textContent = `[${new Date().toISOString()}] ${msg}`;
+      el.prepend(line);
+      console.debug(...args);
+    }
+
+    // Render products to the page with IDs and attributes friendly for Selenium IDE tests.
+    function renderProducts() {
+      const list = document.getElementById('productList');
+      list.innerHTML = '';
+      state.products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'product';
+        card.innerHTML = `
+          <h3 id="product-name-${p.id}">${p.name}</h3>
+          <div class="price" id="product-price-${p.id}">
+            $${(p.onSale && p.salePrice ? p.salePrice : p.price).toFixed(2)}
+            ${p.onSale ? '<span class="onsale">ON SALE</span>' : ''}
+          </div>
+          <p id="product-desc-${p.id}">${p.description}</p>
+          <button id="add-btn-${p.id}" data-product-id="${p.id}" aria-label="Add ${p.name} to cart">Add to cart</button>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    // Update cart icon and contents immediately when items are added/removed.
+    function updateCartIcon() {
+      const countEl = document.getElementById('cartCount');
+      countEl.textContent = state.cart.length;
+      devLog('Cart updated. Count=', state.cart.length);
+      renderCartContents();
+    }
+
+    // Render cart detailed contents (for human verification)
+    function renderCartContents() {
+      const ul = document.getElementById('cartContents');
+      ul.innerHTML = '';
+      state.cart.forEach((item, idx) => {
+        const li = document.createElement('li');
+        li.id = `cart-item-${idx}`;
+        li.textContent = `${item.name} — $${(item.price).toFixed(2)}`;
+        ul.appendChild(li);
+      });
+    }
+
+    // --- BUG FIX: handleAddToCart should correctly add ANY product, prefer salePrice if onSale ---
+    function handleAddToCart(productId) {
+      devLog('handleAddToCart called for productId=', productId);
+
+      // --- START OF FIX ---
+      const product = state.products.find(p => p.id === productId);
+      if (!product) {
+        devLog('Product not found:', productId);
+        return; // Product not found
+      }
+
+      // Create a copy to add to the cart
+      const itemToAdd = { ...product };
+
+      // BUG 8 FIX: Check if it's on sale and use the sale price
+      if (itemToAdd.onSale && itemToAdd.salePrice) {
+        itemToAdd.price = itemToAdd.salePrice;
+      }
+
+      state.cart.push(itemToAdd);
+
+      // BUG 3 FIX: Update the cart icon immediately!
+      updateCartIcon();
+      devLog('Added to cart:', itemToAdd);
+      // --- END OF FIX ---
+    }
+
+    // Attach listeners to product add buttons (delegated attachment for dynamic content)
+    function hookAddButtons() {
+      document.getElementById('productList').addEventListener('click', (ev) => {
+        const btn = ev.target.closest('button[data-product-id]');
+        if (!btn) return;
+        const id = Number(btn.getAttribute('data-product-id'));
+        handleAddToCart(id);
+      });
+    }
+
+    // For convenience: expose a test helper on window so Selenium IDE or console tests can use it
+    window.testHelpers = {
+      addProductByName: (name) => {
+        const p = state.products.find(x => x.name === name);
+        if (!p) throw new Error('Product not found: ' + name);
+        handleAddToCart(p.id);
+      },
+      getCart: () => state.cart.slice(),
+      resetCart: () => { state.cart = []; updateCartIcon(); }
+    };
+
+    // Initial render
+    renderProducts();
+    hookAddButtons();
+    updateCartIcon();
+
+    // Accessibility / keyboard support: allow Enter/Space to activate add to cart
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const active = document.activeElement;
+        if (active && active.matches('button[data-product-id]')) {
+          active.click();
+        }
+      }
+    });
+
+    // If you want to quickly test via console:
+    // window.testHelpers.addProductByName('Quantum Q-Tips');
+  </script>
+</body>
+</html>
