@@ -3,39 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BugMart - A QA Playground (Fixed!)</title>
+    <title>BugMart - A QA Playground (Fixed)</title>
+    <!-- Load Tailwind CSS - FIXED LINK -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Use the Inter font, which is clean and modern */
         body { font-family: 'Inter', sans-serif; }
-        /* Simple "page" transition */
-        .page { display: none; animation: fadeIn 0.3s; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Simple "page" transition animation */
+        .page { 
+            display: none; /* Hide pages by default */
+            animation: fadeIn 0.3s;
+            width: 100%; /* Ensure pages take full width of their container */
+        }
+        .page.active { 
+            display: block; /* Show the active page */
+        }
+        
+        /* Fade-in and slight upward move animation */
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
     </style>
 </head>
-<body class="bg-gray-200">
+<!-- UPDATED STYLES: Changed bg color and added min-h-screen to ensure footer (if any) sticks to bottom -->
+<body class="bg-slate-100 min-h-screen">
 
-    <!-- Header & Navigation -->
-    <nav class="bg-white shadow-md">
+    <!-- Header & Navigation - UPDATED STYLES: New color (sky), sticky top for usability -->
+    <nav class="bg-white shadow-md sticky top-0 z-10">
         <div class="container mx-auto max-w-6xl p-4 flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-indigo-700 cursor-pointer" data-page="products">BugMart</h1>
-            <div class="space-x-4">
-                <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="products">Products</a>
-                <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="cart">
+            <!-- UPDATED STYLES: Changed to sky blue -->
+            <h1 class="text-3xl font-bold text-sky-600 cursor-pointer" data-page="products">BugMart</h1>
+            <!-- UPDATED STYLES: Responsive spacing for nav links -->
+            <div class="space-x-2 md:space-x-4">
+                <a href="#" class="text-gray-600 hover:text-sky-600" data-page="products">Products</a>
+                <a href="#" class="text-gray-600 hover:text-sky-600" data-page="cart">
                     Cart (<span id="cart-count">0</span>)
                 </a>
-                <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="profile">Profile</a>
-                <a href="#" class="text-gray-600 hover:text-indigo-600" id="login-logout-link" data-page="login">Login</a>
+                <a href="#" class="text-gray-600 hover:text-sky-600" data-page="profile">Profile</a>
+                <a href="#" class="text-gray-600 hover:text-sky-600" id="login-logout-link" data-page="login">Login</a>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content Area -->
-    <main id="app-root" class="container mx-auto max-w-6xl p-4 md:p-8">
+    <!-- Main Content Area - UPDATED STYLES: Centered content for login/profile, full-width for products/cart -->
+    <main id="app-root" class="container mx-auto max-w-6xl p-4 md:p-8 flex flex-col items-center justify-start min-h-[calc(100vh-80px)]">
 
         <!-- Login Page -->
-        <section id="page-login" class="page bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto">
-            <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+        <section id="page-login" class="page bg-white p-8 rounded-lg shadow-lg max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Login</h2>
             <form id="login-form" class="space-y-4">
                 <div>
                     <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
@@ -45,7 +62,8 @@
                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                     <input type="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Hint: pass">
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700">
+                <!-- UPDATED STYLES: New color (sky) and transition -->
+                <button type="submit" class="w-full bg-sky-600 text-white p-3 rounded-lg font-bold hover:bg-sky-700 transition-colors">
                     Login
                 </button>
                 <p id="login-error" class="text-red-500 text-sm text-center hidden"></p>
@@ -54,16 +72,17 @@
 
         <!-- Product Page -->
         <section id="page-products" class="page">
-            <h2 class="text-2xl font-bold mb-6">Products</h2>
-            <div id="product-list" class="grid md:grid-cols-3 gap-6">
+            <h2 class="text-3xl font-bold mb-6 text-slate-800">Products</h2>
+            <div id="product-list" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Products will be injected here by JS -->
             </div>
         </section>
 
         <!-- Cart Page -->
         <section id="page-cart" class="page">
-            <h2 class="text-2xl font-bold mb-6">Your Cart</h2>
-            <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-bold mb-6 text-slate-800">Your Cart</h2>
+            <!-- UPDATED STYLES: Set max-width for consistency on large screens -->
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-3xl mx-auto">
                 <div id="cart-items" class="space-y-4">
                     <!-- Cart items will be injected here by JS -->
                 </div>
@@ -82,6 +101,7 @@
                         <span>Shipping:</span>
                         <span id="cart-shipping">$0.00</span>
                     </div>
+                    <!-- ADDED: Discount line item for clarity (Fix for Bug 5) -->
                     <div class="flex justify-between text-lg text-green-600">
                         <span>Discount:</span>
                         <span id="cart-discount">-$0.00</span>
@@ -100,22 +120,54 @@
             </div>
         </section>
 
-        <!-- Profile Page -->
+        <!-- Profile Page - UPDATED with Tabs and New Fields -->
         <section id="page-profile" class="page">
-            <h2 class="text-2xl font-bold mb-6">Your Profile</h2>
-            <div class="bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto space-y-4">
-                <div>
-                    <span class="font-semibold">Username:</span>
-                    <span id="profile-username"></span>
+            <h2 class="text-3xl font-bold mb-6 text-slate-800">Your Profile</h2>
+            <div class="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full space-y-4">
+                
+                <!-- Tab Buttons -->
+                <div class="flex border-b">
+                    <button id="tab-btn-details" class="profile-tab-btn py-2 px-4 text-sky-600 border-b-2 border-sky-600 font-semibold">User Details</button>
+                    <button id="tab-btn-settings" class="profile-tab-btn py-2 px-4 text-gray-500 hover:text-gray-700">Settings</button>
                 </div>
-                <div>
-                    <label for="shipping-tier" class="block text-sm font-medium text-gray-700">Shipping Tier</label>
-                    <select id="shipping-tier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                        <option value="standard">Standard ($15.00)</option>
-                        <option value="premium">Premium (Free Shipping)</option>
-                    </select>
+
+                <!-- Tab Content: User Details -->
+                <div id="tab-content-details" class="profile-tab-content space-y-4">
+                    <div class="text-lg">
+                        <span class="font-semibold">Username:</span>
+                        <span id="profile-username"></span> <!-- This is read-only -->
+                    </div>
+                    <div>
+                        <label for="profile-name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="profile-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
+                    <div>
+                        <label for="profile-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <input type="email" id="profile-email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
+                    <div>
+                        <label for="profile-address" class="block text-sm font-medium text-gray-700">Address</label>
+                        <input type="text" id="profile-address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
+                    <div>
+                        <label for="profile-location" class="block text-sm font-medium text-gray-700">Location (City, State)</label>
+                        <input type="text" id="profile-location" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
                 </div>
-                <button id="update-profile-btn" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700">
+
+                <!-- Tab Content: Settings (Shipping) -->
+                <div id="tab-content-settings" class="profile-tab-content space-y-4 hidden">
+                    <div>
+                        <label for="shipping-tier" class="block text-sm font-medium text-gray-700">Shipping Tier</label>
+                        <select id="shipping-tier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                            <option value="standard">Standard ($15.00)</option>
+                            <option value="premium">Premium (Free Shipping)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Shared Button and Message -->
+                <button id="update-profile-btn" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition-colors">
                     Update Profile
                 </button>
                 <p id="profile-message" class="text-green-600 text-sm text-center"></p>
@@ -124,23 +176,19 @@
 
     </main>
     
-    <!-- 
-    ==================================================
-    == ALL BUGS FROM THE GUIDE ARE NOW FIXED ==
-    ==================================================
-    -->
-
     <script>
         // --- APPLICATION STATE ---
+        // This is the "single source of truth".
         const state = {
             currentUser: null, // Holds the logged-in user object
             products: [
-                { id: 1, name: 'Flux Capacitor', price: 100.00, onSale: false, salePrice: null, image: 'https://placehold.co/400x300/6366f1/white?text=Flux+Capacitor' },
+                // FIXED IMAGE URLS
+                { id: 1, name: 'Flux Capacitor', price: 100.00, onSale: false, salePrice: null, image: 'https://placehold.co/400x300/38bdf8/white?text=Flux+Capacitor' },
                 { id: 2, name: 'Quantum Q-Tips', price: 10.00, onSale: true, salePrice: 5.00, image: 'https://placehold.co/400x300/10b981/white?text=Quantum+Q-Tips' },
                 { id: 3, name: 'Neural Net', price: 45.00, onSale: false, salePrice: null, image: 'https://placehold.co/400x300/f59e0b/white?text=Neural+Net' }
             ],
             cart: [], // Array of product objects
-            currentDiscount: 0 // 0.10 for 10%
+            currentDiscount: 0 // Holds the discount percentage, e.g., 0.10
         };
 
         // --- GLOBAL ELEMENTS ---
@@ -156,8 +204,23 @@
          * Simple SPA router. Hides all pages, shows the one requested.
          */
         function navigateTo(pageId) {
+            // Handle auth-wall *before* navigating
+            // FIX: TC-LOGIN-003 & TC-BUG-006
+            if (pageId === 'cart' || pageId === 'profile') {
+                if (!state.currentUser) {
+                    // Redirect to login
+                    navigateTo('login');
+                    // Display error message
+                    const errorEl = document.getElementById('login-error');
+                    errorEl.textContent = 'You must be logged in to view this page.';
+                    errorEl.classList.remove('hidden');
+                    return; // Stop navigation
+                }
+            }
+            
             // Hide all pages
             pages.forEach(page => page.classList.remove('active'));
+            
             // Show the requested page
             const targetPage = document.getElementById(`page-${pageId}`);
             if (targetPage) {
@@ -171,15 +234,6 @@
             if (pageId === 'products') renderProducts();
             if (pageId === 'cart') renderCart();
             if (pageId === 'profile') renderProfile();
-            
-            // Handle auth-wall
-            if (pageId === 'cart' || pageId === 'profile') {
-                if (!state.currentUser) {
-                    navigateTo('login');
-                    document.getElementById('login-error').textContent = 'You must be logged in to view this page.';
-                    document.getElementById('login-error').classList.remove('hidden');
-                }
-            }
         }
 
         /**
@@ -190,12 +244,16 @@
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const pageId = e.currentTarget.getAttribute('data-page');
+                    
                     if (pageId === 'login' && state.currentUser) {
                         // Handle logout
                         state.currentUser = null;
-                        state.cart = []; // Clear cart on logout
-                        state.currentDiscount = 0;
-                        updateCartIcon();
+                        
+                        // FIX: TC-BUG-007 - Cart SHOULD persist. Do NOT clear state.cart.
+                        // The original code had `state.cart = [];` which was a bug.
+                        
+                        state.currentDiscount = 0; // Clear discount
+                        updateCartIcon(); // Update count (will be 0 if cart is cleared, or persisted count if not)
                         loginLogoutLink.textContent = 'Login';
                         navigateTo('login');
                     } else {
@@ -220,13 +278,15 @@
                        <span class="text-sm text-gray-500 line-through ml-2">$${product.price.toFixed(2)}</span>`
                     : `<span class="text-lg font-bold text-gray-800">$${product.price.toFixed(2)}</span>`;
                 
+                // UPDATED STYLES: Added transition and hover effects
                 productList.innerHTML += `
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                         <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover">
                         <div class="p-4">
                             <h3 class="text-xl font-bold">${product.name}</h3>
                             <div class="my-2">${priceHtml}</div>
-                            <button class="add-to-cart-btn w-full bg-indigo-600 text-white p-2 rounded-lg font-bold hover:bg-indigo-700" data-product-id="${product.id}">
+                            <!-- UPDATED STYLES: New color (sky) -->
+                            <button class="add-to-cart-btn w-full bg-sky-600 text-white p-2 rounded-lg font-bold hover:bg-sky-700 transition-colors" data-product-id="${product.id}">
                                 Add to Cart
                             </button>
                         </div>
@@ -235,6 +295,7 @@
             });
             
             // Add event listeners to new buttons
+            // This setup is correct and works for all buttons
             document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
                 btn.addEventListener('click', handleAddToCart);
             });
@@ -244,18 +305,20 @@
          * Renders the cart contents and calculates totals.
          */
         function renderCart() {
+            // FIX: TC-BUG-002 (Bug 3) - Update cart icon *every time* cart is rendered
+            updateCartIcon();
+            
             const cartItemsEl = document.getElementById('cart-items');
             cartItemsEl.innerHTML = '';
             
             if (state.cart.length === 0) {
                 cartItemsEl.innerHTML = '<p class="text-gray-500 text-center">Your cart is empty.</p>';
-                calculateTotals(); 
+                calculateTotals(); // Calculate totals (will be all 0)
                 return;
             }
 
-            state.cart.forEach(item => {
-                // Use a unique identifier for each cart item, e.g., index
-                // For this simple app, we'll just use product ID for removal
+            state.cart.forEach((item, index) => {
+                // FIX: TC-BUG-005 - Add a remove button with a unique identifier (index)
                 cartItemsEl.innerHTML += `
                     <div class="flex justify-between items-center">
                         <div>
@@ -264,8 +327,8 @@
                         </div>
                         <div class="flex items-center space-x-4">
                             <span class="font-bold">$${item.price.toFixed(2)}</span>
-                            <!-- FEATURE: Add Remove Button -->
-                            <button class="remove-from-cart-btn text-red-500 hover:text-red-700 font-bold text-lg" data-product-id="${item.id}" title="Remove item">
+                            <!-- This is the new "Remove" button -->
+                            <button class="remove-from-cart-btn text-red-500 hover:text-red-700 font-bold text-2xl" data-cart-index="${index}" title="Remove item">
                                 &times;
                             </button>
                         </div>
@@ -273,24 +336,38 @@
                 `;
             });
 
-            // Add listeners for remove buttons
-            cartItemsEl.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+            // FIX: TC-BUG-005 (Continued) - Add event listeners for new remove buttons
+            document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
                 btn.addEventListener('click', handleRemoveFromCart);
             });
             
-            calculateTotals(); 
+            calculateTotals(); // Recalculate totals
         }
         
         /**
          * Renders the profile page.
          */
         function renderProfile() {
-            if (!state.currentUser) return; // Should be caught by router, but good practice
+            if (!state.currentUser) return; 
             
-            // FIX 1: Read username from state.currentUser.username
+            // FIX: TC-BUG-001 (Bug 1) - Read from state.currentUser.username on render
             document.getElementById('profile-username').textContent = state.currentUser.username;
             
+            // UPDATED: Populate all new fields
+            document.getElementById('profile-name').value = state.currentUser.name;
+            document.getElementById('profile-email').value = state.currentUser.email;
+            document.getElementById('profile-address').value = state.currentUser.address;
+            document.getElementById('profile-location').value = state.currentUser.location;
+            
             document.getElementById('shipping-tier').value = state.currentUser.shippingTier;
+
+            // Reset tabs to default view
+            document.getElementById('tab-content-details').classList.remove('hidden');
+            document.getElementById('tab-content-settings').classList.add('hidden');
+            document.getElementById('tab-btn-details').classList.add('text-sky-600', 'border-sky-600');
+            document.getElementById('tab-btn-details').classList.remove('text-gray-500', 'hover:text-gray-700');
+            document.getElementById('tab-btn-settings').classList.add('text-gray-500', 'hover:text-gray-700');
+            document.getElementById('tab-btn-settings').classList.remove('text-sky-600', 'border-sky-600');
         }
 
         // --- LOGIC & EVENT HANDLERS ---
@@ -304,7 +381,7 @@
             const password = document.getElementById('password').value;
             const errorEl = document.getElementById('login-error');
 
-            // FIX 7: Add validation for empty fields
+            // FIX: TC-LOGIN-002 (Bug 7) - Add validation for empty fields
             if (!username || !password) {
                 errorEl.textContent = 'Please enter both username and password.';
                 errorEl.classList.remove('hidden');
@@ -312,14 +389,20 @@
             }
             
             if (username === 'test' && password === 'pass') {
+                // UPDATED: Add new fields to the user state on login
                 state.currentUser = {
                     username: username,
-                    shippingTier: 'standard' // Default shipping
+                    shippingTier: 'standard', // Default shipping
+                    name: "Test User",
+                    email: "test@example.com",
+                    address: "123 Bug St",
+                    location: "Testville, QA"
                 };
                 loginLogoutLink.textContent = 'Logout';
                 errorEl.classList.add('hidden');
                 navigateTo('products');
             } else {
+                // FIX: TC-LOGIN-002 - Ensure error message is correct
                 errorEl.textContent = 'Invalid username or password.';
                 errorEl.classList.remove('hidden');
             }
@@ -327,7 +410,6 @@
         
         /**
          * Handles adding an item to the cart.
-         * This function is no longer commented out and replaces the broken hard-coded listener.
          */
         function handleAddToCart(e) {
             if (!state.currentUser) {
@@ -337,7 +419,7 @@
                 return;
             }
             
-            // FIX 4: This listener now works for *all* buttons
+            // FIX: TC-BUG-003 (Bug 4) - This now works for ALL buttons, not just one.
             const productId = parseInt(e.currentTarget.getAttribute('data-product-id'));
             
             const product = state.products.find(p => p.id === productId);
@@ -346,36 +428,32 @@
             // Create a copy to add to the cart
             const itemToAdd = { ...product };
 
-            // FIX 8: Check if it's on sale and use the sale price
+            // FIX: TC-BUG-003 (Bug 8) - Check if it's on sale and use the salePrice
             if (itemToAdd.onSale && itemToAdd.salePrice) {
                 itemToAdd.price = itemToAdd.salePrice;
             }
 
             state.cart.push(itemToAdd);
 
-            // FIX 3: Update the cart icon immediately!
+            // FIX: TC-BUG-002 (Bug 3) - Update the cart icon immediately!
             updateCartIcon();
         }
 
         /**
-         * Handles removing an item from the cart.
+         * FIX: TC-BUG-005 - New function to remove item from cart
          */
         function handleRemoveFromCart(e) {
-            const productId = parseInt(e.currentTarget.getAttribute('data-product-id'));
+            const cartIndex = parseInt(e.currentTarget.getAttribute('data-cart-index'));
             
-            // Find the *first* instance of this product in the cart and remove it
-            // This handles duplicates one by one
-            const itemIndex = state.cart.findIndex(item => item.id === productId);
-            
-            if (itemIndex > -1) {
-                state.cart.splice(itemIndex, 1);
+            // Check if the index is valid
+            if (cartIndex > -1 && cartIndex < state.cart.length) {
+                state.cart.splice(cartIndex, 1); // Remove 1 item at the found index
             }
             
-            // Re-render the cart (which recalculates totals)
+            // Re-render the cart to show removal and update totals
             renderCart();
-            // Also update the header icon
-            updateCartIcon();
         }
+
 
         /**
          * Calculates all totals in the cart.
@@ -383,26 +461,27 @@
         function calculateTotals() {
             let subtotal = 0;
             state.cart.forEach(item => {
-                // FIX 8 (Continued): This now reads the correct (sale) price
+                // FIX: TC-BUG-003 (Bug 8) - This now correctly reads the price
                 subtotal += item.price;
             });
             
             const tax = subtotal * 0.10;
             
-            // FIX 2: Shipping cost now correctly reads from the user's state
-            let shippingCost = (state.currentUser && state.currentUser.shippingTier === 'premium') ? 0.00 : 15.00;
-            
-            // If cart is empty, shipping is 0
-            if (state.cart.length === 0) {
+            // FIX: TC-BUG-004 (Bug 2) - Shipping cost now correctly reads from the user's state
+            let shippingCost = 15.00; // Default
+            if (state.currentUser && state.currentUser.shippingTier === 'premium') {
                 shippingCost = 0.00;
             }
+            if (state.cart.length === 0) {
+                shippingCost = 0.00; // No shipping on empty cart
+            }
             
-            let total = subtotal + tax + shippingCost;
-            
-            // FIX 5: Discount is applied to *subtotal*, not *total*.
+            // FIX: (Bug 5) - Discount based on *subtotal*, not total
             let discountAmount = subtotal * state.currentDiscount;
-            total -= discountAmount;
             
+            let total = subtotal + tax + shippingCost - discountAmount;
+            
+            // Update all the text fields
             document.getElementById('cart-subtotal').textContent = `$${subtotal.toFixed(2)}`;
             document.getElementById('cart-tax').textContent = `$${tax.toFixed(2)}`;
             document.getElementById('cart-shipping').textContent = `$${shippingCost.toFixed(2)}`;
@@ -417,16 +496,18 @@
             const code = document.getElementById('discount-code').value;
             const messageEl = document.getElementById('discount-message');
             
-            // FIX 6: Removed the "subtotal > 50" requirement for 'SAVE10'
+            // FIX: (Bug 6) - Removed `subtotal > 50` condition.
             if (code === 'SAVE10' && state.cart.length > 0) {
                 messageEl.textContent = '10% discount applied!';
                 messageEl.className = 'text-green-600 text-sm mt-2';
-                state.currentDiscount = 0.10; // Apply 10% discount
+                state.currentDiscount = 0.10; // Set discount state
             } else {
+                // FIX: TC-DISCOUNT-001 - Ensure error message is correct
                 messageEl.textContent = 'Discount code not valid for this order.';
                 messageEl.className = 'text-red-500 text-sm mt-2';
-                state.currentDiscount = 0; // Apply 0% discount
+                state.currentDiscount = 0; // Reset discount
             }
+
             // Recalculate totals with the new discount
             calculateTotals();
         }
@@ -435,21 +516,21 @@
          * Handles the "Update Profile" button.
          */
         function handleUpdateProfile() {
-            if (!state.currentUser) return;
-            const tier = document.getElementById('shipping-tier').value;
-            state.currentUser.shippingTier = tier;
+            if (!state.currentUser) return; // Safety check
             
-            // FIX 1 (Continued): This now just updates the username text
-            // which was already set correctly by renderProfile
+            // UPDATED: Read from all fields in the state
+            state.currentUser.shippingTier = document.getElementById('shipping-tier').value;
+            state.currentUser.name = document.getElementById('profile-name').value;
+            state.currentUser.email = document.getElementById('profile-email').value;
+            state.currentUser.address = document.getElementById('profile-address').value;
+            state.currentUser.location = document.getElementById('profile-location').value;
+            
+            // FIX: TC-BUG-001 - Set username text when updating (and on load)
             document.getElementById('profile-username').textContent = state.currentUser.username;
             
             const messageEl = document.getElementById('profile-message');
             messageEl.textContent = 'Profile updated successfully!';
             setTimeout(() => messageEl.textContent = '', 2000);
-
-            // If we update shipping, we should recalculate the cart
-            // but the user isn't on that page. The cart will be correct
-            // next time they visit it, since renderCart() calls calculateTotals().
         }
 
         /**
@@ -459,10 +540,41 @@
             cartCountEl.textContent = state.cart.length;
         }
 
+        /**
+         * UPDATED: Adds click handlers for profile tabs
+         */
+        function setupProfileTabs() {
+            const tabBtnDetails = document.getElementById('tab-btn-details');
+            const tabBtnSettings = document.getElementById('tab-btn-settings');
+            const tabContentDetails = document.getElementById('tab-content-details');
+            const tabContentSettings = document.getElementById('tab-content-settings');
+
+            tabBtnDetails.addEventListener('click', () => {
+                tabContentDetails.classList.remove('hidden');
+                tabContentSettings.classList.add('hidden');
+
+                tabBtnDetails.classList.add('text-sky-600', 'border-sky-600');
+                tabBtnDetails.classList.remove('text-gray-500', 'hover:text-gray-700');
+                tabBtnSettings.classList.add('text-gray-500', 'hover:text-gray-700');
+                tabBtnSettings.classList.remove('text-sky-600', 'border-sky-600');
+            });
+
+            tabBtnSettings.addEventListener('click', () => {
+                tabContentDetails.classList.add('hidden');
+                tabContentSettings.classList.remove('hidden');
+
+                tabBtnDetails.classList.remove('text-sky-600', 'border-sky-600');
+                tabBtnDetails.classList.add('text-gray-500', 'hover:text-gray-700');
+                tabBtnSettings.classList.remove('text-gray-500', 'hover:text-gray-700');
+                tabBtnSettings.classList.add('text-sky-600', 'border-sky-600');
+            });
+        }
+
 
         // --- APP INITIALIZATION ---
         function init() {
             setupNavigation();
+            setupProfileTabs(); // ADDED: Initialize profile tab logic
             // Add listeners for forms/buttons that are always visible
             document.getElementById('login-form').addEventListener('submit', handleLogin);
             document.getElementById('update-profile-btn').addEventListener('click', handleUpdateProfile);
