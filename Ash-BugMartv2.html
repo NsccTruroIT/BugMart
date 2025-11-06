@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BugMart - A QA Playground</title>
+    <title>BugMart - A QA Playground (Fixed!)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -82,6 +82,10 @@
                         <span>Shipping:</span>
                         <span id="cart-shipping">$0.00</span>
                     </div>
+                    <div class="flex justify-between text-lg text-green-600">
+                        <span>Discount:</span>
+                        <span id="cart-discount">-$0.00</span>
+                    </div>
                     <div class="flex justify-between text-2xl font-bold mt-4 pt-4 border-t">
                         <span>TOTAL:</span>
                         <span id="cart-total">$0.00</span>
@@ -122,81 +126,12 @@
     
     <!-- 
     ==================================================
-    == TEACHER'S GUIDE - LIST OF BUGS ==
-    ==================================================
-    
-    This app is designed to be tested with an automation tool like Selenium.
-    The bugs are specifically focused on integration points and complex logic
-    that would be tedious to re-test manually.
-    
-    1.  INTEGRATION BUG (Login/Profile):
-        - **Bug:** Logging in doesn't update the Profile page.
-        - **Test Case:** 1. Go to Login page, login as "test"/"pass".
-            2. Navigate to the Profile page.
-        - **Result:** The "Username" field is blank. The app *only* sets the username when the "Update Profile" button is clicked, not on login.
-        
-    2.  INTEGRATION BUG (Profile/Cart):
-        - **Bug:** Updating the "Shipping Tier" on the Profile page to "Premium (Free Shipping)" does *not* update the shipping cost in the Cart.
-        - **Test Case (requires automation):**
-            1. Login.
-            2. Add an item to the cart.
-            3. Go to Cart, observe Shipping is "$15.00".
-            4. Go to Profile, select "Premium (Free Shipping)", click "Update Profile".
-            5. Go back to Cart.
-        - **Result:** Shipping is *still* "$15.00". The Cart module never checks the user's profile status.
-        
-    3.  INTEGRATION BUG (Product/Cart Icon):
-        - **Bug:** The "Cart (0)" count in the header navigation does *not* update immediately when an item is added.
-        - **Test Case:**
-            1. Login.
-            2. On the Products page, click "Add to Cart" on any item.
-        - **Result:** The header still says "Cart (0)". It only updates when you manually navigate to the Cart page itself.
-        
-    4.  REGRESSION BUG (Product/Cart):
-        - **Bug:** A "developer fix" for the "Flux Capacitor" add-to-cart button broke all other add-to-cart buttons.
-        - **Test Case:**
-            1. Login.
-            2. Add "Flux Capacitor" to cart. (This works).
-            3. Try to add "Quantum Q-Tips" or "Neural Net" to the cart.
-        - **Result:** The buttons do nothing. This forces students to write a test that checks *all* product buttons, not just one. (See `handleAddToCart` function).
-    
-    5.  LOGIC BUG (Automation Candidate - Edge Cases):
-        - **Bug:** The discount code "SAVE10" is supposed to give 10% off the *subtotal*. Instead, it gives 10% off the *total* (after tax & shipping).
-        - **Test Case (requires automation):**
-            1. Login. Add "Flux Capacitor" ($100).
-            2. Go to Cart. Subtotal = $100. Tax = $10. Shipping = $15. Total = $125.
-            3. Apply code "SAVE10".
-        - **Result:** A discount of $12.50 (10% of Total) is applied, not $10.00 (10% of Subtotal).
-    
-    6.  LOGIC BUG (Automation Candidate - Data-Driven):
-        - **Bug:** The "SAVE10" discount code *only* works if the subtotal is over $50. This requirement is not stated anywhere.
-        - **Test Case (requires automation):**
-            1. Login. Add "Neural Net" ($45).
-            2. Go to Cart.
-            3. Apply code "SAVE10".
-        - **Result:** An error message "Discount code not valid for this order" appears.
-        
-    7.  VALIDATION BUG (Automation Candidate - Repetitive):
-        - **Bug:** The Login form has no client-side validation.
-        - **Test Case:** Click "Login" with empty username/password fields.
-        - **Result:** The page does nothing (no error message, no login). A good test suite would check for empty fields, short passwords, invalid emails, etc., which is tedious to do manually.
-    
-    8.  INTEGRATION BUG (Product/Cart Price):
-        - **Bug:** The "Quantum Q-Tips" are "On Sale!" on the product page, but are added to the cart at their *full price*.
-        - **Test Case:**
-            1. Login.
-            2. Note "Quantum Q-Tips" price is $5.00 (was $10.00).
-            3. Add item to cart.
-            4. Go to Cart page.
-        - **Result:** The item is listed in the cart for $10.00, not the $5.00 sale price.
-        
+    == ALL BUGS FROM THE GUIDE ARE NOW FIXED ==
     ==================================================
     -->
 
     <script>
         // --- APPLICATION STATE ---
-        // This is the "single source of truth".
-        // Bugs happen when modules don't read/write to this correctly.
         const state = {
             currentUser: null, // Holds the logged-in user object
             products: [
@@ -205,6 +140,7 @@
                 { id: 3, name: 'Neural Net', price: 45.00, onSale: false, salePrice: null, image: 'https://placehold.co/400x300/f59e0b/white?text=Neural+Net' }
             ],
             cart: [], // Array of product objects
+            currentDiscount: 0 // 0.10 for 10%
         };
 
         // --- GLOBAL ELEMENTS ---
@@ -258,6 +194,7 @@
                         // Handle logout
                         state.currentUser = null;
                         state.cart = []; // Clear cart on logout
+                        state.currentDiscount = 0;
                         updateCartIcon();
                         loginLogoutLink.textContent = 'Login';
                         navigateTo('login');
@@ -307,32 +244,41 @@
          * Renders the cart contents and calculates totals.
          */
         function renderCart() {
-            // BUG 3: Cart icon update is here, which is too late.
-            // It should be called in `handleAddToCart`.
-            updateCartIcon();
-            
             const cartItemsEl = document.getElementById('cart-items');
             cartItemsEl.innerHTML = '';
             
             if (state.cart.length === 0) {
                 cartItemsEl.innerHTML = '<p class="text-gray-500 text-center">Your cart is empty.</p>';
-                calculateTotals(0); // Pass 0 for discount
+                calculateTotals(); 
                 return;
             }
 
             state.cart.forEach(item => {
+                // Use a unique identifier for each cart item, e.g., index
+                // For this simple app, we'll just use product ID for removal
                 cartItemsEl.innerHTML += `
                     <div class="flex justify-between items-center">
                         <div>
                             <h4 class="font-bold">${item.name}</h4>
                             <p class="text-sm text-gray-600">$${item.price.toFixed(2)}</p>
                         </div>
-                        <span class="font-bold">$${item.price.toFixed(2)}</span>
+                        <div class="flex items-center space-x-4">
+                            <span class="font-bold">$${item.price.toFixed(2)}</span>
+                            <!-- FEATURE: Add Remove Button -->
+                            <button class="remove-from-cart-btn text-red-500 hover:text-red-700 font-bold text-lg" data-product-id="${item.id}" title="Remove item">
+                                &times;
+                            </button>
+                        </div>
                     </div>
                 `;
             });
+
+            // Add listeners for remove buttons
+            cartItemsEl.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+                btn.addEventListener('click', handleRemoveFromCart);
+            });
             
-            calculateTotals(0); // Pass 0 for discount initially
+            calculateTotals(); 
         }
         
         /**
@@ -341,11 +287,8 @@
         function renderProfile() {
             if (!state.currentUser) return; // Should be caught by router, but good practice
             
-            // BUG 1: Does not read from state.currentUser.username
-            document.getElementById('profile-username').textContent = ''; 
-            
-            // This is how it *should* be:
-            // document.getElementById('profile-username').textContent = state.currentUser.username;
+            // FIX 1: Read username from state.currentUser.username
+            document.getElementById('profile-username').textContent = state.currentUser.username;
             
             document.getElementById('shipping-tier').value = state.currentUser.shippingTier;
         }
@@ -361,7 +304,12 @@
             const password = document.getElementById('password').value;
             const errorEl = document.getElementById('login-error');
 
-            // BUG 7: No validation for empty/invalid fields.
+            // FIX 7: Add validation for empty fields
+            if (!username || !password) {
+                errorEl.textContent = 'Please enter both username and password.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
             
             if (username === 'test' && password === 'pass') {
                 state.currentUser = {
@@ -379,6 +327,7 @@
         
         /**
          * Handles adding an item to the cart.
+         * This function is no longer commented out and replaces the broken hard-coded listener.
          */
         function handleAddToCart(e) {
             if (!state.currentUser) {
@@ -388,71 +337,76 @@
                 return;
             }
             
+            // FIX 4: This listener now works for *all* buttons
             const productId = parseInt(e.currentTarget.getAttribute('data-product-id'));
             
-            // --- START OF FIX ---
+            const product = state.products.find(p => p.id === productId);
+            if (!product) return; // Product not found
 
-const product = state.products.find(p => p.id === productId);
-if (!product) return; // Product not found
+            // Create a copy to add to the cart
+            const itemToAdd = { ...product };
 
-// Create a copy to add to the cart
-const itemToAdd = { ...product };
+            // FIX 8: Check if it's on sale and use the sale price
+            if (itemToAdd.onSale && itemToAdd.salePrice) {
+                itemToAdd.price = itemToAdd.salePrice;
+            }
 
-// BUG 8 FIX: Check if it's on sale and use the sale price
-if (itemToAdd.onSale && itemToAdd.salePrice) {
-    itemToAdd.price = itemToAdd.salePrice;
-}
+            state.cart.push(itemToAdd);
 
-state.cart.push(itemToAdd);
+            // FIX 3: Update the cart icon immediately!
+            updateCartIcon();
+        }
 
-// BUG 3 FIX: Update the cart icon immediately!
-updateCartIcon();
-
-// --- END OF FIX ---
-
-
-            // BUG 3 (Missing Call): The `updateCartIcon()` function is not called here.
+        /**
+         * Handles removing an item from the cart.
+         */
+        function handleRemoveFromCart(e) {
+            const productId = parseInt(e.currentTarget.getAttribute('data-product-id'));
+            
+            // Find the *first* instance of this product in the cart and remove it
+            // This handles duplicates one by one
+            const itemIndex = state.cart.findIndex(item => item.id === productId);
+            
+            if (itemIndex > -1) {
+                state.cart.splice(itemIndex, 1);
+            }
+            
+            // Re-render the cart (which recalculates totals)
+            renderCart();
+            // Also update the header icon
+            updateCartIcon();
         }
 
         /**
          * Calculates all totals in the cart.
          */
-        function calculateTotals(discountPercentage) {
+        function calculateTotals() {
             let subtotal = 0;
             state.cart.forEach(item => {
-                // BUG 8 (Continued): Reads item.price, which was added at full price.
+                // FIX 8 (Continued): This now reads the correct (sale) price
                 subtotal += item.price;
             });
             
             const tax = subtotal * 0.10;
             
-            // BUG 2: Shipping is hard-coded, doesn't check state.currentUser.shippingTier
-            const shipping = (state.currentUser.shippingTier === 'premium') ? 0.00 : 15.00;
-            // The logic above is *correct*, but the state it reads from is never updated by the Profile page.
-            // Oh, wait, no. The bug is that the *state* is updated, but this function
-            // reads from the *hard-coded* default. Let's simulate that.
+            // FIX 2: Shipping cost now correctly reads from the user's state
+            let shippingCost = (state.currentUser && state.currentUser.shippingTier === 'premium') ? 0.00 : 15.00;
             
-            let shippingCost = 15.00;
-            // This is how it *should* be:
-            // let shippingCost = (state.currentUser.shippingTier === 'premium') ? 0.00 : 15.00;
-            
-            // BUG 2 (Actual):
-            // The code *ignores* the user state.
-            if (state.currentUser.shippingTier === 'standard') {
-                shippingCost = 15.00;
+            // If cart is empty, shipping is 0
+            if (state.cart.length === 0) {
+                shippingCost = 0.00;
             }
-            // The dev forgot to add: else if (state.currentUser.shippingTier === 'premium') { shippingCost = 0.00; }
-            
             
             let total = subtotal + tax + shippingCost;
             
-            // BUG 5: Discount is applied to *total*, not *subtotal*.
-            let discountAmount = total * discountPercentage;
+            // FIX 5: Discount is applied to *subtotal*, not *total*.
+            let discountAmount = subtotal * state.currentDiscount;
             total -= discountAmount;
             
             document.getElementById('cart-subtotal').textContent = `$${subtotal.toFixed(2)}`;
             document.getElementById('cart-tax').textContent = `$${tax.toFixed(2)}`;
             document.getElementById('cart-shipping').textContent = `$${shippingCost.toFixed(2)}`;
+            document.getElementById('cart-discount').textContent = `-$${discountAmount.toFixed(2)}`;
             document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
         }
 
@@ -463,38 +417,39 @@ updateCartIcon();
             const code = document.getElementById('discount-code').value;
             const messageEl = document.getElementById('discount-message');
             
-            // BUG 6: Code only works if subtotal is > $50.
-            let subtotal = 0;
-            state.cart.forEach(item => { subtotal += item.price; });
-            
-            if (code === 'SAVE10' && subtotal > 50) {
+            // FIX 6: Removed the "subtotal > 50" requirement for 'SAVE10'
+            if (code === 'SAVE10' && state.cart.length > 0) {
                 messageEl.textContent = '10% discount applied!';
                 messageEl.className = 'text-green-600 text-sm mt-2';
-                calculateTotals(0.10); // Apply 10% discount
+                state.currentDiscount = 0.10; // Apply 10% discount
             } else {
                 messageEl.textContent = 'Discount code not valid for this order.';
                 messageEl.className = 'text-red-500 text-sm mt-2';
-                calculateTotals(0); // Apply 0% discount
+                state.currentDiscount = 0; // Apply 0% discount
             }
+            // Recalculate totals with the new discount
+            calculateTotals();
         }
         
         /**
          * Handles the "Update Profile" button.
          */
         function handleUpdateProfile() {
+            if (!state.currentUser) return;
             const tier = document.getElementById('shipping-tier').value;
             state.currentUser.shippingTier = tier;
             
-            // This *correctly* updates the state...
-            // ...but the Cart's `calculateTotals` function doesn't read it. (BUG 2)
-            
-            // This *correctly* updates the username...
-            // ...but it's the *only* place it gets set. (BUG 1)
+            // FIX 1 (Continued): This now just updates the username text
+            // which was already set correctly by renderProfile
             document.getElementById('profile-username').textContent = state.currentUser.username;
             
             const messageEl = document.getElementById('profile-message');
             messageEl.textContent = 'Profile updated successfully!';
             setTimeout(() => messageEl.textContent = '', 2000);
+
+            // If we update shipping, we should recalculate the cart
+            // but the user isn't on that page. The cart will be correct
+            // next time they visit it, since renderCart() calls calculateTotals().
         }
 
         /**
