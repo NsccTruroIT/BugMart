@@ -316,7 +316,12 @@
             
             // --- FIX 2 ---
             // Was a buggy if-block. Now correctly reads state.
-            let shippingCost = (state.currentUser.shippingTier === 'premium') ? 0.00 : 15.00;
+            // --- FIX for Phase 4 Bug ---
+            // Shipping should be $0 if the cart is empty, regardless of tier.
+            let shippingCost = 15.00; // Default to standard shipping
+            if (state.currentUser.shippingTier === 'premium' || subtotal === 0) {
+                shippingCost = 0.00;
+            }
             
             // --- FIX 5 ---
             // Discount is now calculated from subtotal, not total.
