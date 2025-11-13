@@ -93,6 +93,11 @@
                     <button id="apply-discount-btn" class="bg-gray-700 text-white p-2 rounded-r-lg font-bold hover:bg-gray-800">Apply</button>
                 </div>
                 <p id="discount-message" class="text-sm mt-2"></p>
+        <!-- Clear Cart Button -->
+        <!-- Added in Phase 4: A button that allows users to remove all items from their cart in one click. -->
+        <button id="clear-cart-btn" class="w-full bg-red-600 text-white p-3 rounded-lg font-bold mt-4 hover:bg-red-700">
+            Clear Cart
+        </button>
             </div>
         </section>
 
@@ -418,9 +423,17 @@
             
             const tax = subtotal * 0.10;
             // determine shipping cost based on user's shipping tier
-            let shippingCost = 15.00;
-            if (state.currentUser && state.currentUser.shippingTier === 'premium') {
+            // Determine shipping cost based on cart contents and user's selected tier.
+            // If the cart is empty, shipping should be free (0.00).
+            let shippingCost;
+            if (state.cart.length === 0) {
                 shippingCost = 0.00;
+            } else {
+                // Base shipping is $15.00 for standard tier, $0.00 for premium tier
+                shippingCost = 15.00;
+                if (state.currentUser && state.currentUser.shippingTier === 'premium') {
+                    shippingCost = 0.00;
+                }
             }
             // Compute the total: subtotal + tax + shipping, then apply discount to the subtotal
             let discountAmount = subtotal * discountPercentage;
@@ -430,6 +443,24 @@
             document.getElementById('cart-tax').textContent = `$${tax.toFixed(2)}`;
             document.getElementById('cart-shipping').textContent = `$${shippingCost.toFixed(2)}`;
             document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+        }
+
+        /**
+         * Handles clearing the cart.
+         *
+         * This function empties the cart array, triggers a re-render
+         * of the cart view, recalculates totals to reset them to zero,
+         * and updates the cart icon count in the header.  It is wired to
+         * the Clear Cart button added in Phase 4.
+         */
+        function handleClearCart() {
+            // Empty the cart array
+            state.cart = [];
+            // Re-render the cart to show an empty cart message and zero totals
+            renderCart();
+            // Recalculate totals (should be zeros) and update the cart icon count
+            calculateTotals(0);
+            updateCartIcon();
         }
 
         /**
@@ -488,6 +519,8 @@
             document.getElementById('login-form').addEventListener('submit', handleLogin);
             document.getElementById('update-profile-btn').addEventListener('click', handleUpdateProfile);
             document.getElementById('apply-discount-btn').addEventListener('click', handleApplyDiscount);
+            // Attach the Clear Cart button handler (Phase 4 enhancement)
+            document.getElementById('clear-cart-btn').addEventListener('click', handleClearCart);
             
             // Start on the login page
             navigateTo('login');
